@@ -86,6 +86,13 @@ auto read_le16(std::span<const std::byte> bytes, size_t offset) -> uint16_t {
         | (std::to_integer<uint16_t>(bytes[offset + 1]) << 8);
 }
 
+auto read_le32(std::span<const std::byte> bytes, size_t offset) -> uint32_t {
+    return (std::to_integer<uint32_t>(bytes[offset]))
+        | (std::to_integer<uint32_t>(bytes[offset + 1]) << 8)
+        | (std::to_integer<uint32_t>(bytes[offset + 2]) << 16)
+        | (std::to_integer<uint32_t>(bytes[offset + 3]) << 24);
+}
+
 struct Dimensions {
     int width, height;
 };
@@ -108,6 +115,12 @@ auto get_dimensions(std::span<const std::byte> bytes, ImageFormat format) -> std
             w = static_cast<int>(read_le16(bytes, 6));
             // Byte 8-9 are the height for GIF (2 bytes, little-endian)
             h = static_cast<int>(read_le16(bytes, 8));
+            break;
+        case ImageFormat::bmp:
+            // Byte 18-21 are the width for BMP (4 bytes, little-endian)
+            w = static_cast<int>(read_le32(bytes, 18));
+            // Byte 22-23 are the height for BMP (4 bytes, little-endian)
+            h = static_cast<int>(read_le32(bytes, 22));
             break;
         default:
             return std::nullopt;
