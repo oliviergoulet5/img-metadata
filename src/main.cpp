@@ -119,14 +119,14 @@ auto get_dimensions(std::span<const std::byte> bytes, ImageFormat format) -> std
         case ImageFormat::bmp:
             // Byte 18-21 are the width for BMP (4 bytes, little-endian)
             w = static_cast<int>(read_le32(bytes, 18));
-            // Byte 22-23 are the height for BMP (4 bytes, little-endian)
+            // Bytes 22-25 are the height for BMP (4 bytes, little-endian)
             h = static_cast<int>(read_le32(bytes, 22));
             break;
         default:
             return std::nullopt;
     }
 
-    return Dimensions{width: w, height: h};
+    return Dimensions{w, h};
 }
 
 auto main(int argc, char* argv[]) -> int {
