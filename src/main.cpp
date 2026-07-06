@@ -81,6 +81,11 @@ auto read_be32(std::span<const std::byte> bytes, size_t offset) -> uint32_t {
         | (std::to_integer<uint32_t>(bytes[offset + 3]));
 }
 
+auto read_le16(std::span<const std::byte> bytes, size_t offset) -> uint16_t {
+    return (std::to_integer<uint16_t>(bytes[offset]))
+        | (std::to_integer<uint16_t>(bytes[offset + 1]) << 8);
+}
+
 struct Dimensions {
     int width, height;
 };
@@ -93,10 +98,16 @@ auto get_dimensions(std::span<const std::byte> bytes, ImageFormat format) -> std
     int w, h = 0;
     switch (format) {
         case ImageFormat::png:
-            // Bytes 16-19 are width in PNG (4 bytes, big-endian)
+            // Bytes 16-19 are width for PNG (4 bytes, big-endian)
             w = static_cast<int>(read_be32(bytes, 16));
-            // Bytes 20-23 are height in PNG (4 bytes, big-endian)
+            // Bytes 20-23 are height for PNG (4 bytes, big-endian)
             h = static_cast<int>(read_be32(bytes, 20));
+            break;
+        case ImageFormat::gif:
+            // Byte 6-7 are the width for GIF (2 bytes, little-endian)
+            w = static_cast<int>(read_le16(bytes, 6));
+            // Byte 8-9 are the height for GIF (2 bytes, little-endian)
+            h = static_cast<int>(read_le16(bytes, 8));
             break;
         default:
             return std::nullopt;
