@@ -144,12 +144,26 @@ auto get_bmp_bit_depth(std::span<const std::byte> bytes) -> std::optional<int> {
     return bit_depth;
 }
 
+auto get_gif_bit_depth(std::span<const std::byte> bytes) -> std::optional<int> {
+    // GIFs uses a packed byte (bitfield) to encode bit depth as opposed to an entire byte.
+    // Bits 4-6 are color resolution (gives you bit depth when you add 1)
+    // Bits 0-2 is size of global color table.
+    // Bit 7 is global color table flag.
+    // Bit 3 is sort flag.
+    auto packed = std::to_integer<uint8_t>(bytes[10]);
+    auto bit_depth = ((packed >> 4) & 0x07) + 1;
+
+    return bit_depth;
+}
+
 auto get_bit_depth(std::span<const std::byte> bytes, ImageFormat format) -> std::optional<int> {
     switch (format) {
         case ImageFormat::png:
             return get_png_bit_depth(bytes);
         case ImageFormat::bmp:
             return get_bmp_bit_depth(bytes);
+        case ImageFormat::gif:
+            return get_gif_bit_depth(bytes);
         default:
             return std::nullopt;
     }
