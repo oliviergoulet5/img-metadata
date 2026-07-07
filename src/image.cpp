@@ -138,10 +138,18 @@ auto get_png_bit_depth(std::span<const std::byte> bytes) -> std::optional<int> {
     return bit_depth;
 }
 
+auto get_bmp_bit_depth(std::span<const std::byte> bytes) -> std::optional<int> {
+    // Byte offest 28, 2 bytes, little endian for BMP bit depth.
+    auto bit_depth = static_cast<int>(read_le16(bytes, 28));
+    return bit_depth;
+}
+
 auto get_bit_depth(std::span<const std::byte> bytes, ImageFormat format) -> std::optional<int> {
     switch (format) {
         case ImageFormat::png:
             return get_png_bit_depth(bytes);
+        case ImageFormat::bmp:
+            return get_bmp_bit_depth(bytes);
         default:
             return std::nullopt;
     }
