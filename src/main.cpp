@@ -25,23 +25,21 @@ auto main(int argc, char* argv[]) -> int {
 
     // Display size of image file and first couple of bytes.
     auto view = std::span{*bytes};
-    auto image_format = detect_format(view);
 
-    if (!image_format) return EXIT_FAILURE;
+    auto ret = get_image_metadata(view);
+    if (!ret) return EXIT_FAILURE;
 
-    auto image_dimensions = get_dimensions(view, image_format.value());
+    auto metadata = ret.value();
 
     std::println("Size: {} bytes", bytes->size());
     std::println("First bytes: {:02X} {:02X} ...",
         std::to_integer<unsigned>(view[0]),
         std::to_integer<unsigned>(view[1])
     );
-    std::println("Format: {}", image_format_to_string(image_format.value()));
-    
-    if (image_dimensions) { 
-        std::println("Width: {}", image_dimensions.value().width);
-        std::println("Height: {}", image_dimensions.value().height);
-    }
+    std::println("Format: {}", image_format_to_string(metadata.format));
+    std::println("Width: {}", metadata.dimensions.width);
+    std::println("Height: {}", metadata.dimensions.height);
+    std::println("Bit Depth: {}", metadata.bit_depth);
 
     return EXIT_SUCCESS;
 }

@@ -64,7 +64,7 @@ auto read_le32(std::span<const std::byte> bytes, size_t offset) -> uint32_t {
 /// @param format The image file format.
 /// @return The dimensions of the image.
 auto get_dimensions(std::span<const std::byte> bytes, ImageFormat format) -> std::optional<Dimensions> {
-    int w, h = 0;
+    int w = 0, h = 0;
     switch (format) {
         case ImageFormat::png:
             // Bytes 16-19 are width for PNG (4 bytes, big-endian)
@@ -130,4 +130,29 @@ auto read_jpg_dimensions(std::span<const std::byte> bytes) -> std::optional<Dime
     }
 
     return std::nullopt;
+}
+
+auto get_png_bit_depth(std::span<const std::byte> bytes) -> std::optional<int> {
+    // Byte 24 is the bit depth for PNGs.
+    auto bit_depth = std::to_integer<int>(bytes[24]);
+    return bit_depth;
+}
+
+auto get_bit_depth(std::span<const std::byte> bytes, ImageFormat format) -> std::optional<int> {
+    switch (format) {
+        case ImageFormat::png:
+            return get_png_bit_depth(bytes);
+        default:
+            return std::nullopt;
+    }
+}
+
+auto get_image_metadata(std::span<const std::byte> bytes) -> std::optional<ImageMetadata> {
+    auto format = detect_format(bytes);
+    if (!format) return std::nullopt;
+    
+    auto dimensions = get_dimensions(bytes, format.value());
+    auto bit_depth = get_bit_depth(bytes, format.value());
+
+    return ImageMetadata{format.value(), dimensions.value_or(Dimensions{0,0}), bit_depth.value_or(0)};
 }
