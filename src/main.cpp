@@ -18,7 +18,7 @@ auto main(int argc, char* argv[]) -> int {
 
     int exit_code = 0;
 
-    for (int i = 0; i < argc; ++i) {
+    for (int i = 1; i < argc; ++i) {
         std::string_view file = argv[i];
         std::println("File: {}", file);
 
@@ -55,5 +55,5 @@ auto main(int argc, char* argv[]) -> int {
         }
     }
     
-    return EXIT_SUCCESS;
+    return exit_code;
 }
