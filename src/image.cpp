@@ -30,6 +30,11 @@ auto detect_format(std::span<const std::byte> bytes) -> std::optional<ImageForma
     return std::nullopt;
 }
 
+auto read_be16(std::span<const std::byte> bytes, size_t offset) -> uint16_t {
+    return (std::to_integer<uint32_t>(bytes[offset]) << 8) 
+        | (std::to_integer<uint32_t>(bytes[offset + 1]));
+}
+
 /// @brief Reads 4 bytes as a big-endian 32-bit unsigned integer.
 /// @param bytes The byte span of the image file.
 /// @param offset The starting position of the 4-byte value.
@@ -79,9 +84,50 @@ auto get_dimensions(std::span<const std::byte> bytes, ImageFormat format) -> std
             // Bytes 22-25 are the height for BMP (4 bytes, little-endian)
             h = static_cast<int>(read_le32(bytes, 22));
             break;
+        case ImageFormat::jpg:
+            return read_jpg_dimensions(bytes);
         default:
             return std::nullopt;
     }
 
     return Dimensions{w, h};
+}
+
+auto read_jpg_dimensions(std::span<const std::byte> bytes) -> std::optional<Dimensions> {
+    // Start at offset 2 (skip JPEG's magic bytes)
+    int offset = 2;
+
+    // Look for `FF` byte (marker start)
+    while (offset + 1 < bytes.size()) {
+        if (std::to_integer<uint8_t>(bytes[offset]) != 0xFF) {
+            ++offset; // skip padding bytes between markers
+            continue;
+        }
+
+        if (offset + 3 >= bytes.size()) break; // not enough for complete marker
+
+        // Read next byte to identify marker type
+        //      C0-C3: SOF (read width/height at current offset + 5 and + 7)
+        //      D9: EOI - stop, no dimensions found
+        //      DA: SOS - stop (dimensions should have been before this)
+        //      Anything else: read 2-byte length, skip ahead by that many bytes, continue
+        auto marker = std::to_integer<uint8_t>(bytes[offset + 1]);
+        switch (marker) {
+            case 0xC0: case 0xC1: case 0xC2: case 0xC3: {
+                auto h = static_cast<int>(read_be16(bytes, offset + 5));
+                auto w = static_cast<int>(read_be16(bytes, offset + 7));
+                return Dimensions{w, h};
+            }
+            case 0xD9:
+            case 0xDA:
+                return std::nullopt;
+            default: {
+                auto len = read_be16(bytes, offset + 2);
+                offset += len + 2;
+                break;
+            }
+        }
+    }
+
+    return std::nullopt;
 }

@@ -20,7 +20,11 @@ struct Dimensions {
     int width, height;
 };
 
+auto read_jpg_dimensions(std::span<const std::byte> bytes) -> std::optional<Dimensions>;
+
 auto get_dimensions(std::span<const std::byte> bytes, ImageFormat format) -> std::optional<Dimensions>;
+
+auto read_be16(std::span<const std::byte> bytes, size_t offset) -> uint16_t;
 
 auto read_be32(std::span<const std::byte> bytes, size_t offset) -> uint32_t;
 
