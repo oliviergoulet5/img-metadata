@@ -33,10 +33,22 @@ auto read_le16(std::span<const std::byte> bytes, size_t offset) -> uint16_t;
 
 auto read_le32(std::span<const std::byte> bytes, size_t offset) -> uint32_t;
 
+enum class ColorType {
+    grayscale,
+    rgb,
+    indexed,
+    grayscale_alpha,
+    rgba,
+    unknown
+};
+
+auto color_type_to_string(ColorType color_type) -> std::string_view;
+
 struct ImageMetadata {
     ImageFormat format;
     Dimensions dimensions = {0, 0};
     int bit_depth = 0;
+    ColorType color_type = ColorType::unknown;
 };
 
 auto get_image_metadata(std::span<const std::byte> bytes) -> std::optional<ImageMetadata>;

@@ -188,12 +188,67 @@ auto get_bit_depth(std::span<const std::byte> bytes, ImageFormat format) -> std:
     }
 }
 
+auto get_png_color_type(std::span<const std::byte> bytes) -> ColorType {
+    auto color_type_raw = std::to_integer<int>(bytes[25]);
+    ColorType color_type;
+
+    switch (color_type_raw) {
+        case 0:
+            color_type = ColorType::grayscale;
+            break;
+        case 2:
+            color_type = ColorType::rgb;
+            break;
+        case 3:
+            color_type = ColorType::indexed;
+            break;
+        case 4:
+            color_type = ColorType::grayscale_alpha;
+            break;
+        case 6:
+            color_type = ColorType::rgba;
+            break;
+        default:
+            color_type = ColorType::unknown;
+            break;
+    }
+
+    return color_type;
+}
+
+auto get_color_type(std::span<const std::byte> bytes, ImageFormat format) -> ColorType {
+    switch (format) {
+        case ImageFormat::png:
+            return get_png_color_type(bytes);
+        default:
+            return ColorType::unknown;
+    }
+}
+
+auto color_type_to_string(ColorType color_type) -> std::string_view {
+    switch (color_type) {
+        case ColorType::grayscale:
+            return "Grayscale";
+        case ColorType::grayscale_alpha:
+            return "Grayscale Alpha";
+        case ColorType::indexed:
+            return "Indexed";
+        case ColorType::rgb:
+            return "RGB";
+        case ColorType::rgba:
+            return "RGBA";
+        default:
+            return "Unknown";
+    }
+}
+
 auto get_image_metadata(std::span<const std::byte> bytes) -> std::optional<ImageMetadata> {
     auto format = detect_format(bytes);
     if (!format) return std::nullopt;
     
     auto dimensions = get_dimensions(bytes, format.value());
     auto bit_depth = get_bit_depth(bytes, format.value());
+    auto color_type = get_color_type(bytes, format.value());
 
-    return ImageMetadata{format.value(), dimensions.value_or(Dimensions{0,0}), bit_depth.value_or(0)};
+    return ImageMetadata{format.value(), dimensions.value_or(Dimensions{0,0}), bit_depth.value_or(0), color_type};
 }

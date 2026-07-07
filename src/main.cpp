@@ -45,6 +45,7 @@ auto main(int argc, char* argv[]) -> int {
         std::println("Width: {}", metadata.dimensions.width);
         std::println("Height: {}", metadata.dimensions.height);
         std::println("Bit Depth: {}", metadata.bit_depth);
+        std::println("Color Type: {}", color_type_to_string(metadata.color_type));
 
         if (argc > i + 1) {
             std::println("---");
