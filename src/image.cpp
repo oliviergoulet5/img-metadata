@@ -93,43 +93,46 @@ auto get_dimensions(std::span<const std::byte> bytes, ImageFormat format) -> std
     return Dimensions{w, h};
 }
 
-auto read_jpg_dimensions(std::span<const std::byte> bytes) -> std::optional<Dimensions> {
+/// @brief Scans each JPEG marker starting at offset 2 and calls visitor.
+/// @param bytes The byte span of the JPEG image file.
+/// @param visitor A callable with signature void(uint8_t marker, size_t offset).
+///     Markers: 0xC0-C3 are SOF (contains width/height/precision).
+///     0xD9 is EOI, 0xDA is SOS — stop scanning.
+///     Anything else: read 2-byte length, then skip ahead by that many bytes.
+void for_each_jpg_marker(std::span<const std::byte> bytes, auto visitor) {
     // Start at offset 2 (skip JPEG's magic bytes)
-    int offset = 2;
+    size_t offset = 2;
 
-    // Look for `FF` byte (marker start)
-    while (offset + 1 < bytes.size()) {
+    while (offset + 3 < bytes.size()) {
         if (std::to_integer<uint8_t>(bytes[offset]) != 0xFF) {
             ++offset; // skip padding bytes between markers
             continue;
         }
 
-        if (offset + 3 >= bytes.size()) break; // not enough for complete marker
-
         // Read next byte to identify marker type
-        //      C0-C3: SOF (read width/height at current offset + 5 and + 7)
-        //      D9: EOI - stop, no dimensions found
-        //      DA: SOS - stop (dimensions should have been before this)
-        //      Anything else: read 2-byte length, skip ahead by that many bytes, continue
         auto marker = std::to_integer<uint8_t>(bytes[offset + 1]);
-        switch (marker) {
-            case 0xC0: case 0xC1: case 0xC2: case 0xC3: {
-                auto h = static_cast<int>(read_be16(bytes, offset + 5));
-                auto w = static_cast<int>(read_be16(bytes, offset + 7));
-                return Dimensions{w, h};
-            }
-            case 0xD9:
-            case 0xDA:
-                return std::nullopt;
-            default: {
-                auto len = read_be16(bytes, offset + 2);
-                offset += len + 2;
-                break;
-            }
-        }
-    }
+        // EOI (D9) or SOS (DA): stop, nothing useful follows
+        if (marker == 0xD9 || marker == 0xDA) return;
 
-    return std::nullopt;
+        // Skip past the marker and its data
+        auto len = read_be16(bytes, offset + 2);
+        visitor(marker, offset);
+        offset += len + 2; // +2 for FF + marker byte
+    }
+}
+
+auto read_jpg_dimensions(std::span<const std::byte> bytes) -> std::optional<Dimensions> {
+    std::optional<Dimensions> dimensions;
+
+    for_each_jpg_marker(bytes, [&](uint8_t marker, size_t offset) {
+        if (marker >= 0xC0 && marker <= 0xC3) {
+            auto w = static_cast<int>(read_be16(bytes, offset + 7));
+            auto h = static_cast<int>(read_be16(bytes, offset + 5));
+            dimensions = Dimensions{w, h};
+        }
+    });
+
+    return dimensions;
 }
 
 auto get_png_bit_depth(std::span<const std::byte> bytes) -> std::optional<int> {
@@ -156,8 +159,24 @@ auto get_gif_bit_depth(std::span<const std::byte> bytes) -> std::optional<int> {
     return bit_depth;
 }
 
+auto get_jpg_bit_depth(std::span<const std::byte> bytes) -> std::optional<int> {
+    // JPGs use the term "precision" instead of "bit depth". For the sake of
+    // consistency, I'll refer to it as "bit depth".
+    std::optional<int> bit_depth;
+
+    for_each_jpg_marker(bytes, [&](uint8_t marker, size_t offset) {
+        if (marker >= 0xC0 && marker <= 0xC3) {
+            bit_depth = std::to_integer<int>(bytes[offset + 4]);
+        }
+    });
+
+    return bit_depth;
+}
+
 auto get_bit_depth(std::span<const std::byte> bytes, ImageFormat format) -> std::optional<int> {
     switch (format) {
+        case ImageFormat::jpg:
+            return get_jpg_bit_depth(bytes);
         case ImageFormat::png:
             return get_png_bit_depth(bytes);
         case ImageFormat::bmp:
