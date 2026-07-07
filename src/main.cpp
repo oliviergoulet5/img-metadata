@@ -12,7 +12,7 @@ consteval auto version() -> std::string_view {
 auto main(int argc, char* argv[]) -> int {
     if (argc < 2) {
         std::println("metaimg v{} - Image metadata viewer", version());
-        std::println("Usage: metaimg <image-file>");
+        std::println("Usage: metaimg <image-file...>");
         return EXIT_FAILURE;
     }
 
