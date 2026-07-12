@@ -12,6 +12,8 @@ auto image_format_to_string(ImageFormat format) -> std::string_view {
             return "GIF";
         case ImageFormat::bmp:
             return "BMP";
+        case ImageFormat::avif:
+            return "AVIF";
     }
 
     return "Unknown";
@@ -26,6 +28,10 @@ auto detect_format(std::span<const std::byte> bytes) -> std::optional<ImageForma
     if (header.starts_with("\xff\xd8\xff")) return ImageFormat::jpg;
     if (header.starts_with("\x47\x49\x46\x38")) return ImageFormat::gif;
     if (header.starts_with("\x42\x4d")) return ImageFormat::bmp;
+    if (header.size() >= 12) {
+        auto brand = std::string_view(reinterpret_cast<const char*>(bytes.data() + 8), 4);
+        if (brand == "avif" || brand == "avis") return ImageFormat::avif;
+    }
 
     return std::nullopt;
 }

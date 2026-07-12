@@ -10,7 +10,8 @@ enum class ImageFormat {
     png,
     jpg,
     gif,
-    bmp
+    bmp,
+    avif
 };
 
 auto detect_format(std::span<const std::byte> bytes) -> std::optional<ImageFormat>;

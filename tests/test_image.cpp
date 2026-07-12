@@ -50,3 +50,12 @@ TEST(ImageMetadataTest, ReadsBmpMetadata) {
     EXPECT_EQ(metadata->dimensions.height, 1920);
     EXPECT_EQ(metadata->bit_depth, 24);
 }
+
+TEST(ImageMetadataTest, ReadsAvifMetadata) {
+    auto bytes = read_file("samples/butterfly.avif");
+    ASSERT_TRUE(bytes.has_value());
+
+    auto metadata = get_image_metadata(*bytes);
+    ASSERT_TRUE(metadata.has_value());
+    EXPECT_EQ(metadata->format, ImageFormat::avif);
+}
