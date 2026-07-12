@@ -7,9 +7,9 @@ A command-line image metadata viewer that reads basic metadata from common image
 | Format | Dimensions | Bit Depth | Color Type |
 |--------|:----------:|:---------:|:----------:|
 | PNG    | ✅         | ✅        | ✅         |
+| BMP    | ✅         | ✅        | ✅         |
 | JPEG   | ✅         | ✅        | ❌         |
 | GIF    | ✅         | ✅        | ❌         |
-| BMP    | ✅         | ✅        | ❌         |
 | AVIF   | ❌         | ❌        | ❌         |
 
 > [!NOTE]

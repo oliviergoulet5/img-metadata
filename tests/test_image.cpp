@@ -49,6 +49,7 @@ TEST(ImageMetadataTest, ReadsBmpMetadata) {
     EXPECT_EQ(metadata->dimensions.width, 1920);
     EXPECT_EQ(metadata->dimensions.height, 1920);
     EXPECT_EQ(metadata->bit_depth, 24);
+    EXPECT_EQ(metadata->color_type, ColorType::rgb);
 }
 
 TEST(ImageMetadataTest, ReadsAvifMetadata) {

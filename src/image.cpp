@@ -222,10 +222,20 @@ auto get_png_color_type(std::span<const std::byte> bytes) -> ColorType {
     return color_type;
 }
 
+auto get_bmp_color_type(std::span<const std::byte> bytes) -> ColorType {
+    auto bits_per_pixel = static_cast<int>(read_le16(bytes, 28));
+    if (bits_per_pixel <= 8) return ColorType::indexed;
+    if (bits_per_pixel == 32) return ColorType::rgba;
+
+    return ColorType::rgb;
+}
+
 auto get_color_type(std::span<const std::byte> bytes, ImageFormat format) -> ColorType {
     switch (format) {
         case ImageFormat::png:
             return get_png_color_type(bytes);
+        case ImageFormat::bmp:
+            return get_bmp_color_type(bytes);
         default:
             return ColorType::unknown;
     }
