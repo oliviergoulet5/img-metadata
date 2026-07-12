@@ -24,7 +24,11 @@ cmake -S . -B build && cmake --build build
 ## Run
 
 ```bash
-./build/metaimg samples/lemon.png samples/lotus.jpg
+# Human-readable
+./build/metaimg samples/lemon.png
+
+# JSON output
+./build/metaimg --json samples/lemon.png samples/lotus.jpg
 ```
 
 ## Test
