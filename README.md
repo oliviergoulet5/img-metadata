@@ -2,6 +2,9 @@
 
 A command-line image metadata viewer that reads basic metadata from common image file formats.
 
+> [!NOTE]
+> This project is a personal learning exercise for **C++23** features and modern C++ practices.
+
 ## Supported Metadata
 
 | Format | Dimensions | Bit Depth | Color Type |
@@ -11,9 +14,6 @@ A command-line image metadata viewer that reads basic metadata from common image
 | JPEG   | ✅         | ✅        | ❌         |
 | GIF    | ✅         | ✅        | ❌         |
 | AVIF   | ❌         | ❌        | ❌         |
-
-> [!NOTE]
-> This project is a personal learning exercise for **C++23** features and modern C++ practices.
 
 ## Build
 
